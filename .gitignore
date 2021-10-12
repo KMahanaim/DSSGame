@@ -478,7 +478,3 @@ FodyWeavers.xsd
 # Additional files built by Visual Studio
 
 # End of https://www.toptal.com/developers/gitignore/api/unrealengine,visualstudio
-
-*content/Medieval_Castle_Vol1/Blueprints
-*content/Medieval_Castle_Vol1/Materials
-*content/Medieval_Castle_Vol1/Meshes
