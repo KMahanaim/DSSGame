@@ -2,7 +2,10 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "DarkSoul/Structs/CFDissolve.h"
 #include "CDissolveComponent.generated.h"
+
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnDissolveFinished, UPrimitiveComponent*, bool);
 
 class UMaterial;
 
@@ -15,9 +18,43 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Dissolve", meta = (AllowPrivateAccess = "true"))
 		UMaterial* DissolveMaterial;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Dissolve", meta = (AllowPrivateAccess = "true"))
+		FName DissolveValueName;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Dissolve", meta = (AllowPrivateAccess = "true"))
+		FName DissolveColorName;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Dissolve", meta = (AllowPrivateAccess = "true"))
+		float DissolveInterpSpeed = 1.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Dissolve", meta = (AllowPrivateAccess = "true"))
+		float DissolveTimerDelay = 0.016f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Dissolve", meta = (AllowPrivateAccess = "true"))
+		FLinearColor DissolveColor;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Dissolve", meta = (AllowPrivateAccess = "true"))
+		TArray<FDissolve> Dissolves;
+
 public:	
 	UCDissolveComponent();
 
 protected:
 	virtual void BeginPlay() override;
+
+public:
+	void StartDissolve(UPrimitiveComponent* Component, bool bReverse);
+	void StopDissolve(UPrimitiveComponent* Component);
+	void RestoreComponentMaterials(int32 Index);
+	int32 FindComponent(UPrimitiveComponent* Component);
+	void RemoveComponent(int32 Index);
+
+private:
+	void Dissolve();
+
+public:
+	FOnDissolveFinished OnDissolveFinished;
+
+private:
+	FTimerHandle DissolveTimerHandle;
 };
