@@ -434,6 +434,8 @@ void ACCombatCharacter::Death()
 {
 	StateManager->SetState(EStateType::DEAD);
 
+	HandleMeshOnDeath();
+
 	// Disable Targeting (Camera Lock)
 	// 미구현
 
@@ -442,18 +444,50 @@ void ACCombatCharacter::Death()
 
 	// Remove Widget (HUD)
 	// 미구현
+}
 
-	// Set Ragdoll
-	GetMesh()->SetCollisionProfileName(FName("Ragdoll"));
+void ACCombatCharacter::HandleMeshOnDeath()
+{
+	TArray<AActor*> AttachedActors;
+	GetAttachedActors(AttachedActors, true);
+
+	// Character mesh make ragdoll
+	GetMesh()->SetCollisionProfileName("Ragdoll");
 	GetMesh()->SetSimulatePhysics(true);
 
-	// Enable Physics Weapons
+	// Simulate physics on weapon if character is in combat
 	if (Equipment->IsInCombat())
 	{
-		// 미구현
-		//ACItemWeapon* Weapon = Equipment->GetWeapon();
-		//Weapon->SimulatePhysics();
+		ACItemWeapon* Weapon = Equipment->GetWeapon();
+		CLOG_ERROR_CHECK_RETURN(Weapon);
+
+		Weapon->SimulatePhysics();
+		if (Weapon->GetIsTwinWeapon())
+		{
+			ACItemWeapon* TwinWeapon = Weapon->GetLinkedWeapon().Get();
+			CLOG_ERROR_CHECK_RETURN(TwinWeapon);
+
+			TwinWeapon->SimulatePhysics();
+		}
 	}
+
+	// Dissolve all attached actors and character mesh
+	CLOG_FUNC;
+	for (int32 Index = 0; Index < AttachedActors.Num(); Index++)
+	{
+		AActor* AttachedActor = AttachedActors[Index];
+		if (AttachedActor != nullptr)
+		{
+
+		}
+	}
+
+	Dissolve->StartDissolve(GetMesh());
+	//GetWorldTimerManager().SetTimer(DissolveDelayHandle, FTimerDelegate::CreateLambda([&]()
+	//{
+	//	
+
+	//}), DissolveDelayTime, false);
 }
 
 void ACCombatCharacter::Block()

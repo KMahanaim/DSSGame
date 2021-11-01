@@ -5,7 +5,7 @@
 /// Unreal Engine
 #include "TimerManager.h"
 #include "Engine/World.h"
-#include "Materials/Material.h"
+#include "Materials/MaterialInstance.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Components/PrimitiveComponent.h"
@@ -14,20 +14,20 @@ UCDissolveComponent::UCDissolveComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 
-	DissolveMaterial = CreateDefaultSubobject<UMaterial>(FName("DissolveMaterial"));
+	DissolveMaterial = CreateDefaultSubobject<UMaterialInstance>(FName("DissolveMaterial"));
 }
 
 void UCDissolveComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	DissolveColor.R = 5.0f;
 }
 
-void UCDissolveComponent::StartDissolve(UPrimitiveComponent* Component, bool bReverse)
+void UCDissolveComponent::StartDissolve(UPrimitiveComponent* Component, bool bReverse/** = false */)
 {
-	if (Component == nullptr)
-	{
-		return;
-	}
+	CLOG_FUNC;
+	CLOG_ERROR_CHECK_RETURN(Component);
 
 	int32 ComponentIndex = FindComponent(Component);
 	if (ComponentIndex != INDEX_NONE)
@@ -35,7 +35,7 @@ void UCDissolveComponent::StartDissolve(UPrimitiveComponent* Component, bool bRe
 		Dissolves[ComponentIndex].bReverse = bReverse;
 		Dissolves[ComponentIndex].bIsRunning = true;
 
-		GetWorld()->GetTimerManager().SetTimer(DissolveTimerHandle, this, &UCDissolveComponent::Dissolve, 0.016f, true);
+		GetWorld()->GetTimerManager().SetTimer(DissolveTimerHandle, this, &UCDissolveComponent::Dissolve, 0.1f, true);
 	}
 	else
 	{
@@ -59,12 +59,13 @@ void UCDissolveComponent::StartDissolve(UPrimitiveComponent* Component, bool bRe
 		NewDissolve.bIsRunning = true;
 		Dissolves.Emplace(NewDissolve);
 
-		GetWorld()->GetTimerManager().SetTimer(DissolveTimerHandle, this, &UCDissolveComponent::Dissolve, 0.016f, true);
+		GetWorld()->GetTimerManager().SetTimer(DissolveTimerHandle, this, &UCDissolveComponent::Dissolve, 0.1f, true);
 	}
 }
 
 void UCDissolveComponent::StopDissolve(UPrimitiveComponent* Component)
 {
+	CLOG_FUNC;
 	int32 Index = FindComponent(Component);
 	if (Index != INDEX_NONE)
 	{
@@ -74,6 +75,7 @@ void UCDissolveComponent::StopDissolve(UPrimitiveComponent* Component)
 
 void UCDissolveComponent::RestoreComponentMaterials(int32 Index)
 {
+	CLOG_FUNC;
 	FDissolve* Dissolve = &Dissolves[Index];
 	CLOG_ERROR_CHECK_RETURN(Dissolve);
 
@@ -85,6 +87,7 @@ void UCDissolveComponent::RestoreComponentMaterials(int32 Index)
 
 int32 UCDissolveComponent::FindComponent(UPrimitiveComponent* Component)
 {
+	CLOG_FUNC;
 	for (int32 Index = 0; Index < Dissolves.Num(); Index++)
 	{
 		if (Dissolves[Index].Component == Component)
@@ -98,11 +101,13 @@ int32 UCDissolveComponent::FindComponent(UPrimitiveComponent* Component)
 
 void UCDissolveComponent::RemoveComponent(int32 Index)
 {
+	CLOG_FUNC;
 	Dissolves.RemoveAt(Index);
 }
 
 void UCDissolveComponent::Dissolve()
 {
+	CLog::Print(L"Dissolve Tick", 2.0f, FColor::Red, 2);
 	bool bKeepDissolving = false;
 
 	for (int32 Index = 0; Index < Dissolves.Num(); Index++)

@@ -45,6 +45,9 @@ class DARKSOUL_API ACCombatCharacter : public ACharacter, public IGenericTeamAge
 	GENERATED_BODY()
 
 protected:
+	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true", ClampMax = 10, ClampMin = 0, UIMax = 10, UIMin = 0))
+		float DissolveDelayTime = 3.0f;
+
 	UPROPERTY(EditDefaultsOnly, meta = (ClampMax = 1.0f, ClampMin = 0.0f, UIMax = 1.0f, UIMin = 0.0f), Category = "Montage", meta = (AllowPrivateAccess = "true"))
 		float ResetEffectDurationPercent = 1.0f;
 
@@ -127,6 +130,7 @@ protected:
 
 	/** Character Death */
 	virtual void Death();
+	void HandleMeshOnDeath();
 
 	/* Effect Play */
 	void Block();
@@ -220,4 +224,7 @@ protected:
 
 	/** Reset State Timer */
 	FTimerHandle ResetStateTimerHandle;
+
+	/** Dissolve Timer */
+	FTimerHandle DissolveDelayHandle;
 };

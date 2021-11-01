@@ -12,6 +12,10 @@ void UCPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
-	CLOG_ERROR_CHECK_RETURN(Owner);
+	if (Owner == nullptr)
+	{
+		return;
+	}
+
 	BlockAlpha = Cast<ACPlayerCharacter>(Owner)->GetBlockAlpha();
 }

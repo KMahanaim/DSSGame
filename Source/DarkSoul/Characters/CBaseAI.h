@@ -15,6 +15,9 @@ class DARKSOUL_API ACBaseAI : public ACCombatCharacter, public II_CTargetAble
 	GENERATED_BODY()
 
 private:
+	UPROPERTY(EditDefaultsOnly, Category = "Character", meta = (AllowPrivateAccess = "true"))
+		bool bIsAlreadyHasWeapon = false;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Life", meta = (AllowPrivateAccess = "true"))
 		float DestroyTime = 8.0f;
 

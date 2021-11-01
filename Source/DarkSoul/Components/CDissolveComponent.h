@@ -7,7 +7,7 @@
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnDissolveFinished, UPrimitiveComponent*, bool);
 
-class UMaterial;
+class UMaterialInstance;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class DARKSOUL_API UCDissolveComponent : public UActorComponent
@@ -16,13 +16,13 @@ class DARKSOUL_API UCDissolveComponent : public UActorComponent
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "Dissolve", meta = (AllowPrivateAccess = "true"))
-		UMaterial* DissolveMaterial;
+		UMaterialInstance* DissolveMaterial;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Dissolve", meta = (AllowPrivateAccess = "true"))
-		FName DissolveValueName;
+		FName DissolveValueName = "Amount";
 
 	UPROPERTY(EditDefaultsOnly, Category = "Dissolve", meta = (AllowPrivateAccess = "true"))
-		FName DissolveColorName;
+		FName DissolveColorName = "Color";
 
 	UPROPERTY(EditDefaultsOnly, Category = "Dissolve", meta = (AllowPrivateAccess = "true"))
 		float DissolveInterpSpeed = 1.0f;
@@ -36,6 +36,10 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Dissolve", meta = (AllowPrivateAccess = "true"))
 		TArray<FDissolve> Dissolves;
 
+public:
+	UFUNCTION(BlueprintCallable)
+		void StartDissolve(UPrimitiveComponent* Component, bool bReverse = false);
+
 public:	
 	UCDissolveComponent();
 
@@ -43,7 +47,6 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	void StartDissolve(UPrimitiveComponent* Component, bool bReverse);
 	void StopDissolve(UPrimitiveComponent* Component);
 	void RestoreComponentMaterials(int32 Index);
 	int32 FindComponent(UPrimitiveComponent* Component);
