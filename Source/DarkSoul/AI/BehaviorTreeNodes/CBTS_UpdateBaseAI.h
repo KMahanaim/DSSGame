@@ -3,26 +3,37 @@
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTService.h"
 #include "DarkSoul/Enumerations/CEStateType.h"
-#include "DarkSoul//Enumerations/CEAIBehavior.h"
-#include "CBTS_UpdateMeleeAI.generated.h"
+#include "DarkSoul/Enumerations/CEAIBehavior.h"
+#include "CBTS_UpdateBaseAI.generated.h"
 
 class ACBaseAI;
 class AAIController;
 
+// Debug
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnBehaviorChanged, FString);
 
-struct FBTUpdateMeleeAIMemory
+struct FBTUpdateAIMemory
 {
-	/** true : 이미 실행된 상태, false : 한 번 실행해야 한다*/
-	bool bIsToDoBindFunc = false;
+	/**
+	 * Avoid duplicate connections of Delegate
+	 * true : connected , false : Not connected
+	 */
+	bool bIsBindDelegate = false;
+
+	ACBaseAI* OwnerCharacter = nullptr;
+	AAIController* OwnerController = nullptr;
 };
 
+/**
+ * This is the base of all AI UBTService
+ * This is functions as search, tracking, patrol, and attack.
+ */
 UCLASS()
-class DARKSOUL_API UCBTS_UpdateMeleeAI : public UBTService
+class DARKSOUL_API UCBTS_UpdateBaseAI : public UBTService
 {
 	GENERATED_BODY()
-
-private:
+	
+protected:
 	UPROPERTY(EditAnywhere, Category = "Behavior", meta = (ClampMax = 100.0f, ClampMin = 0.0f, UIMax = 100.0f, UIMin = 0.0f), meta = (AllowPrivateAccess = "true"))
 		float EnoughNearTargetTime = 3.0f;
 
@@ -34,25 +45,22 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Behavior", meta = (AllowPrivateAccess = "true"))
 		FBlackboardKeySelector TargetKey;
-	
-private:
+
+protected:
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 
-	virtual uint16 GetInstanceMemorySize() const override;
+	virtual uint16 GetInstanceMemorySize() const final;
 	void SetBehavior(EAIBehavior Behavior);
 
 	void ResetIsOutOfStamina() { bIsOutOfStamina = false; }
 
-	void Update();
-	void UpdateBehavior();
-	void UpdateActivities();
+	virtual void Update();
+	virtual void UpdateBehavior();
+	virtual void UpdateActivities();
 
 	/** Delegate Bind Function */
 	void OnStateChanged(EStateType PrevState, EStateType NewState);
 	void OnStaminaValueChanged(float NewValue, float MaxValue);
-
-public:
-	FOnBehaviorChanged OnBehaviorChanged;
 
 private:
 	bool bIsOutOfStamina = false;
@@ -61,6 +69,14 @@ private:
 	/* 타겟과 근접했던 시간 */
 	float TicksNearTarget;
 	FTimerHandle OutOfStaminaResetHandler;
-	ACBaseAI* OwnerCharacter;
-	AAIController* OwnerController;
+	FBTUpdateAIMemory* InstanceMemory;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+// Debug
+//////////////////////////////////////////////////////////////////////////////////////////////////
+protected:
+	void DebugBehavior(const EAIBehavior Behavior) const;
+
+public:
+	FOnBehaviorChanged OnBehaviorChanged;
 };

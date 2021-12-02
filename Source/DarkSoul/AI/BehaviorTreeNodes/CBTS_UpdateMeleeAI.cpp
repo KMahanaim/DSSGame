@@ -20,8 +20,6 @@ void UCBTS_UpdateMeleeAI::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* Nod
 {
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
-	CLog::Print(TicksNearTarget, 2.0f, FColor::Cyan, 1);
-
 	FBTUpdateMeleeAIMemory* InstanceMemory = CastInstanceNodeMemory<FBTUpdateMeleeAIMemory>(NodeMemory);
 	CLOG_ERROR_CHECK_RETURN(InstanceMemory);
 

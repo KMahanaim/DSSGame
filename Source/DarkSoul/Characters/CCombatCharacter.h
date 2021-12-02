@@ -52,7 +52,7 @@ protected:
 		float ResetEffectDurationPercent = 1.0f;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Data Table", meta = (AllowPrivateAccess = "true"))
-		UDataTable* WeaponPathTable;
+		UDataTable* WeaponPathTable = nullptr;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // Components UPROPERTY
