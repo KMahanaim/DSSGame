@@ -4,7 +4,6 @@
 #include "Components/ActorComponent.h"
 #include "CBossPhaseComponent.generated.h"
 
-
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class DARKSOUL_API UCBossPhaseComponent : public UActorComponent
 {
@@ -26,7 +25,14 @@ protected:
 public:	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	void InitPhase();
+	void Init();
+
+	/** Trigger the Boss Combat */
+	void Start();
+	void Retry();
+
+	/** End the Boss Combat */
+	void End();
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // Get, Set Functions

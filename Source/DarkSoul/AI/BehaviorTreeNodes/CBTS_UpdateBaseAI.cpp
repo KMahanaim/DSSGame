@@ -61,16 +61,20 @@ void UCBTS_UpdateBaseAI::SetBehavior(EAIBehavior Behavior)
 
 void UCBTS_UpdateBaseAI::Update()
 {
-	UpdateBehavior();
-	UpdateActivities();
+	CLOG_ERROR_CHECK_RETURN(InstanceMemory);
+	CLOG_ERROR_CHECK_RETURN(InstanceMemory->OwnerCharacter);
+	CLOG_ERROR_CHECK_RETURN(InstanceMemory->OwnerController);
+
+	UpdateBehavior(InstanceMemory->OwnerCharacter, InstanceMemory->OwnerController);
+	UpdateActivities(InstanceMemory->OwnerCharacter, InstanceMemory->OwnerController);
 }
 
-void UCBTS_UpdateBaseAI::UpdateBehavior()
+void UCBTS_UpdateBaseAI::UpdateBehavior(ACBaseAI* const OwnerCharacter, AAIController* const OwnerController)
 {
 	CLOG_FUNC_TEXT(L"The function was not inherited");
 }
 
-void UCBTS_UpdateBaseAI::UpdateActivities()
+void UCBTS_UpdateBaseAI::UpdateActivities(ACBaseAI* const OwnerCharacter, AAIController* const OwnerController)
 {
 	CLOG_FUNC_TEXT(L"The function was not inherited");
 }
@@ -85,7 +89,7 @@ void UCBTS_UpdateBaseAI::OnStateChanged(EStateType PrevState, EStateType NewStat
 
 void UCBTS_UpdateBaseAI::OnStaminaValueChanged(float NewValue, float MaxValue)
 {
-	// 스테미나 부족 할 경우
+	// If not enough stamina
 	if (NewValue <= 0.0f)
 	{
 		GetWorld()->GetTimerManager().ClearTimer(OutOfStaminaResetHandler);

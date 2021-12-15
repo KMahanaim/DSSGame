@@ -55,14 +55,14 @@ protected:
 	void ResetIsOutOfStamina() { bIsOutOfStamina = false; }
 
 	virtual void Update();
-	virtual void UpdateBehavior();
-	virtual void UpdateActivities();
+	virtual void UpdateBehavior(ACBaseAI* const OwnerCharacter, AAIController* const OwnerController);
+	virtual void UpdateActivities(ACBaseAI* const OwnerCharacter, AAIController* const OwnerController);
 
 	/** Delegate Bind Function */
 	void OnStateChanged(EStateType PrevState, EStateType NewState);
 	void OnStaminaValueChanged(float NewValue, float MaxValue);
 
-private:
+protected:
 	bool bIsOutOfStamina = false;
 	/* 타겟 뒤로 이동했던 시간 */
 	float TicksStrafe;

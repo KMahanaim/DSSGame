@@ -34,6 +34,7 @@ public:
 	const bool GetActivityValue(const EActivity Activity);
 	FString GetEStateAsString(EStateType State);
 	const EStateType GetState() const { return CurrentState; }
+
 	void TimerResetIdleState();
 	void ResetState(float InTime = 0.0f);
 

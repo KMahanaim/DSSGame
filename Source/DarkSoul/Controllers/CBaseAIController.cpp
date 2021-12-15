@@ -16,6 +16,8 @@
 
 ACBaseAIController::ACBaseAIController()
 {
+	CLOG_FUNC;
+
 	// 1. Team ID Settings
 	{
 		/// 1 : Player, 2 : Monster, 3 : Neutral(중립)
@@ -45,25 +47,42 @@ ACBaseAIController::ACBaseAIController()
 		Perception = CreateDefaultSubobject<UAIPerceptionComponent>(L"Perception");
 		Sight = CreateDefaultSubobject<UAISenseConfig_Sight>("Sight");
 
-		/// Set Detection Range
-		Sight->SightRadius = 400.0f;								/// 시야 거리
-		Sight->PeripheralVisionAngleDegrees = 70.0f;				/// 시야 각도
-		Sight->LoseSightRadius = 800.0f;							/// 추적 최대 거리
-		Sight->SetMaxAge(5.0f);										/// 추적 상태 유지 시간
-
-		/// Set Detection Target
-		Sight->DetectionByAffiliation.bDetectEnemies = true;		/// 적
-		Sight->DetectionByAffiliation.bDetectFriendlies = false;	/// 아군
-		Sight->DetectionByAffiliation.bDetectNeutrals = false;		/// 중립
-
-		Perception->ConfigureSense(*Sight);
-		Perception->SetDominantSense(*Sight->GetSenseImplementation());
+		InitSenseSight();
 	}
 }
 
 void ACBaseAIController::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void ACBaseAIController::InitSenseSight()
+{
+	/// Set Detection Range
+	Sight->SightRadius = 400.0f;								/// 시야 거리
+	Sight->PeripheralVisionAngleDegrees = 70.0f;				/// 시야 각도
+	Sight->LoseSightRadius = 800.0f;							/// 추적 최대 거리
+	Sight->SetMaxAge(5.0f);										/// 추적 상태 유지 시간
+
+	/// Set Detection Target
+	Sight->DetectionByAffiliation.bDetectEnemies = true;		/// 적
+	Sight->DetectionByAffiliation.bDetectFriendlies = false;	/// 아군
+	Sight->DetectionByAffiliation.bDetectNeutrals = false;		/// 중립
+
+	Perception->ConfigureSense(*Sight);
+	Perception->SetDominantSense(*Sight->GetSenseImplementation());
+}
+
+void ACBaseAIController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	SetPawn(InPawn);
+	if (UseBlackboard(BlackBoard, Blackboard))
+	{
+		Blackboard->SetValueAsVector("PatrolLocation", InPawn->GetActorLocation());
+		RunBehaviorTree(BehaviorTree);
+	}
 
 	// Delegate Bind, Add
 	{
@@ -78,18 +97,6 @@ void ACBaseAIController::BeginPlay()
 	}
 }
 
-void ACBaseAIController::OnPossess(APawn* InPawn)
-{
-	Super::OnPossess(InPawn);
-
-	SetPawn(InPawn);
-	if (UseBlackboard(BlackBoard, Blackboard))
-	{
-		Blackboard->SetValueAsVector("PatrolLocation", InPawn->GetActorLocation());
-		RunBehaviorTree(BehaviorTree);
-	}
-}
-
 void ACBaseAIController::OnUnPossess()
 {
 	Super::OnUnPossess();
@@ -101,8 +108,7 @@ void ACBaseAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFoll
 
 	if (Result.IsSuccess())
 	{
-		ACBaseAI* owner = Cast<ACBaseAI>(GetPawn());
-		if (owner != nullptr)
+		if (GetPawn() != nullptr)
 		{
 			OnSuccessPatrolMove.Broadcast(*Blackboard);
 		}
@@ -111,6 +117,11 @@ void ACBaseAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFoll
 			CLOG_FUNC_TEXT(L"GetPawn is nullptr or Cast Failed");
 		}
 	}
+}
+
+void ACBaseAIController::Attacked(AActor* DamageCauser)
+{
+	Blackboard->SetValueAsObject("Target", DamageCauser);
 }
 
 void ACBaseAIController::OnInCombatChanged(bool bIsInCombat)

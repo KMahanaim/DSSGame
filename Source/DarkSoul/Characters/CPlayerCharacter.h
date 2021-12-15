@@ -3,8 +3,12 @@
 
 #include "CoreMinimal.h"
 #include "Characters/CCombatCharacter.h"
+#include "DarkSoul/Interfaces/I_CInteraction.h"
 #include "CPlayerCharacter.generated.h"
 
+DECLARE_DELEGATE(FPlayInteraction)
+DECLARE_DELEGATE(FOffInteractionMassage)
+DECLARE_DELEGATE_OneParam(FOnInteractionMassage, FInteractionMassage)
 DECLARE_MULTICAST_DELEGATE(FToggleHUD)
 
 class UCurveFloat;
@@ -19,7 +23,7 @@ class UCExtendedCameraComponent;
  * 플레이어가 가지게 될 클래스
  */
 UCLASS()
-class DARKSOUL_API ACPlayerCharacter : public ACCombatCharacter
+class DARKSOUL_API ACPlayerCharacter : public ACCombatCharacter, public II_CInteraction
 {
 	GENERATED_BODY()
 
@@ -81,11 +85,15 @@ public:
 	virtual void Tick(float DeltaTime) final;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) final;
 	virtual bool TakeDamage(const FHitData& HitData, EAttackResult& OutResultType) final;
+	virtual void OnInteraction(FInteractionMassage InteractionMassage) final;
+	virtual void OffInteraction() final;
 
 	/** Action */
 	virtual void RollAction() final;
 	virtual float MeleeAttackAction(EMeleeAttackType AttackType) final;
 	virtual void WeaponSwitchAction(EWeaponSwitchType SwitchType) final;
+
+	void OnBeginLoading() { bIsInLoading = true; }
 
 private:
 	/** Defense */
@@ -101,16 +109,25 @@ public:
 	virtual FGenericTeamId GetGenericTeamId() const { return FGenericTeamId(1); }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
+// Condition Check Functions
+//////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+	const bool IsInLoading() const { return bIsInLoading; }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
 // Player Key Input Bind Functions
 //////////////////////////////////////////////////////////////////////////////////////////////////
 private:
-	/* Character Moving */
+	/** Character Moving */
 	void MoveForwardOrBackward(float AxisValue);
 	void MoveRightOrLeft(float AxisValue);
 
 	/** Camera Control */
 	void HorizontalLook(float AxisValue);
 	void VerticalLook(float AxisValue);
+
+	/** Interaction */
+	virtual void Interaction() final;
 
 	/** HUD Hide */
 	void HUDHide();
@@ -152,6 +169,7 @@ private:
 	virtual void OnEffectRemoved(EEffectType Type) final;
 
 private:
+	bool bIsInLoading = false;
 	/** Block(Defense) Play Duration, 1.0f = Defense On */
 	float BlockAlpha = 0.0f;
 	/** Blocking(Defense) Time Line */
@@ -163,4 +181,7 @@ private:
 public:
 	/** Delegate */
 	FToggleHUD ToggleHUD;
+	FPlayInteraction PlayInteraction;
+	FOnInteractionMassage OnInteractionMassage;
+	FOffInteractionMassage OffInteractionMassage;
 };

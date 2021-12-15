@@ -17,6 +17,7 @@
 #include "DarkSoul/Enumerations/CEWeaponSwitchType.h"
 #include "CCombatCharacter.generated.h"
 
+class USoundWave;
 class UUserWidget;
 class ACItemWeapon;
 class UCapsuleComponent;
@@ -32,8 +33,6 @@ class UCMontageManagerComponent;
 class UCCollisionHandlerComponent;
 class UCInverseKinemeticsComponent;
 
-class UNiagaraComponent;
-
 /**
  * 기본형이 되는 캐릭터 클래스
  * 플레이어와 몬스터는 이 클래스를 사용한다.
@@ -45,6 +44,15 @@ class DARKSOUL_API ACCombatCharacter : public ACharacter, public IGenericTeamAge
 	GENERATED_BODY()
 
 protected:
+	UPROPERTY(EditDefaultsOnly, Category = "Sound", meta = (AllowPrivateAccess = "true"))
+		USoundWave* HitSound;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Sound", meta = (AllowPrivateAccess = "true"))
+		USoundWave* ParrySound;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Sound", meta = (AllowPrivateAccess = "true"))
+		USoundWave* BlockSound;
+
 	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true", ClampMax = 10, ClampMin = 0, UIMax = 10, UIMin = 0))
 		float DissolveDelayTime = 3.0f;
 
@@ -58,9 +66,6 @@ protected:
 // Components UPROPERTY
 //////////////////////////////////////////////////////////////////////////////////////////////////
 protected:
-	UPROPERTY(VisibleAnywhere, Category = "Component", meta = (AllowPrivateAccess = "true"))
-		UNiagaraComponent* NiagaraSystem;
-
 	UPROPERTY(VisibleAnywhere, Category = "Component", meta = (AllowPrivateAccess = "true"))
 		UCMontageManagerComponent* MontageManager;
 

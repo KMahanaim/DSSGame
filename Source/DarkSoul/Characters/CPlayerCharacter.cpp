@@ -128,6 +128,9 @@ void ACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAxis(L"HorizontalLook", this, &ACPlayerCharacter::HorizontalLook);
 	PlayerInputComponent->BindAxis(L"VerticalLook", this, &ACPlayerCharacter::VerticalLook);
 
+	// Interaction
+	PlayerInputComponent->BindAction(L"Interaction", IE_Pressed, this, &ACPlayerCharacter::Interaction);
+
 	// HUD Hide
 	PlayerInputComponent->BindAction(L"HUDHide", IE_Pressed, this, &ACPlayerCharacter::HUDHide);
 
@@ -153,6 +156,32 @@ void ACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 bool ACPlayerCharacter::TakeDamage(const FHitData& HitData, EAttackResult& OutResultType)
 {
 	return Super::TakeDamage(HitData, OutResultType);
+}
+
+void ACPlayerCharacter::OnInteraction(FInteractionMassage InteractionMassage)
+{
+	// Visible Interaction HUD
+	if (OnInteractionMassage.IsBound())
+	{
+		OnInteractionMassage.Execute(InteractionMassage);
+	}
+	else
+	{
+		CLOG_FUNC_TEXT(L"On Intertaction Massage is not Bind");
+	}
+}
+
+void ACPlayerCharacter::OffInteraction()
+{
+	// InVisible Interaction HUD
+	if (OffInteractionMassage.IsBound())
+	{
+		OffInteractionMassage.Execute();
+	}
+	else
+	{
+		CLOG_FUNC_TEXT(L"Off Intertaction Massage is not Bind");
+	}
 }
 
 void ACPlayerCharacter::RollAction()
@@ -393,6 +422,14 @@ void ACPlayerCharacter::VerticalLook(float AxisValue)
 	}
 }
 
+void ACPlayerCharacter::Interaction()
+{
+	if (PlayInteraction.IsBound())
+	{
+		InputBuffer->UpdateKey(EInputBufferKey::INTERACTION);
+	}
+}
+
 void ACPlayerCharacter::HUDHide()
 {
 	ToggleHUD.Broadcast();
@@ -571,6 +608,18 @@ void ACPlayerCharacter::OnInputBufferConsumed(EInputBufferKey Key)
 			case EInputBufferKey::ABILITY_ATTACK:
 				break;
 			case EInputBufferKey::SET_SPELL_ACTIVE:
+				break;
+			case EInputBufferKey::INTERACTION:
+			{
+				if (PlayInteraction.IsBound())
+				{
+					PlayInteraction.Execute();
+				}
+				else
+				{
+					CLOG_FUNC_TEXT(L"Interaction is not Bind");
+				}
+			}
 				break;
 			default:
 				break;

@@ -25,6 +25,7 @@ public class DarkSoul : ModuleRules
             "Slate",
             "SlateCore", 
             "Niagara", 
+            "Paper2D", 
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] {  });

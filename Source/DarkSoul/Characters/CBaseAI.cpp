@@ -2,6 +2,7 @@
 #include "CBaseAI.h"
 #include "DarkSoul/_Utility/CLog.h"
 #include "DarkSoul/Widgets/CUW_StatBar.h"
+#include "DarkSoul/Controllers/CBaseAIController.h"
 #include "DarkSoul/Components/CPatrolComponent.h"
 #include "DarkSoul/Components/CEffectsComponent.h"
 #include "DarkSoul/Components/CEquipmentComponent.h"
@@ -73,11 +74,22 @@ ACBaseAI::ACBaseAI()
 		BehaviorText->SetRelativeLocation(FVector(0, 0, 100));
 		BehaviorText->SetHorizontalAlignment(EHorizTextAligment::EHTA_Center);
 	}
+
+	// Set Controller
+	{
+		AIControllerClass = ACBaseAIController::StaticClass();
+	}
 }
 
 void ACBaseAI::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	// Controller Spawn
+	if (Controller == nullptr)
+	{
+		SpawnDefaultController();
+	}
 
 	// Widget Init
 	{
@@ -157,6 +169,23 @@ bool ACBaseAI::TakeDamage(const FHitData& HitData, EAttackResult& OutResultType)
 			FVector Location = GetActorLocation();
 			UAISense_Damage::ReportDamageEvent(GetWorld(), this, HitData.DamageCauser, HitData.Damage, Location, Location);
 		}
+	}
+
+	ACBaseAIController* BaseAIController = Cast<ACBaseAIController>(Controller);
+	if (BaseAIController != nullptr)
+	{
+		ACCombatCharacter* DamageCauser = Cast<ACCombatCharacter>(HitData.DamageCauser);
+		if (DamageCauser != nullptr)
+		{
+			if (DamageCauser->GetGenericTeamId() == 1)
+			{
+				BaseAIController->Attacked(HitData.DamageCauser);
+			}
+		}
+	}
+	else
+	{
+		CLOG_ERROR_FUNC_TEXT(L"BaseAIController is nullptr");
 	}
 
 	return Super::TakeDamage(HitData, OutResultType);

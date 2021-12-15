@@ -10,9 +10,7 @@
 #include "DarkSoul/Components/CExtendedStatComponent.h"
 
 /// Unreal Engine
-#include "TimerManager.h"
 #include "AIController.h"
-#include "Engine/World.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
@@ -20,99 +18,11 @@ void UCBTS_UpdateMeleeAI::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* Nod
 {
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
-	FBTUpdateMeleeAIMemory* InstanceMemory = CastInstanceNodeMemory<FBTUpdateMeleeAIMemory>(NodeMemory);
-	CLOG_ERROR_CHECK_RETURN(InstanceMemory);
-
-	OwnerController = Cast<AAIController>(OwnerComp.GetAIOwner());
-	CLOG_ERROR_CHECK_RETURN(OwnerController);
-
-	OwnerCharacter = Cast<ACBaseAI>(OwnerController->GetPawn());
-	CLOG_ERROR_CHECK_RETURN_TEXT(OwnerCharacter, OwnerController->GetName() + L", NULL");
-
-	if (InstanceMemory->bIsToDoBindFunc == false)
-	{
-		InstanceMemory->bIsToDoBindFunc = true;
-		OnBehaviorChanged.AddUObject(OwnerCharacter, &ACBaseAI::OnBehaviorChanged);
-		OwnerCharacter->GetStateManagerComponent()->OnStateChanged.AddUObject(this, &UCBTS_UpdateMeleeAI::OnStateChanged);
-		OwnerCharacter->GetExtendedStatComponent(EStatsType::STAMINA)->OnValueChanged.AddUObject(this, &UCBTS_UpdateMeleeAI::OnStaminaValueChanged);
-	}
-
 	Update();
 }
 
-uint16 UCBTS_UpdateMeleeAI::GetInstanceMemorySize() const
+void UCBTS_UpdateMeleeAI::UpdateBehavior(ACBaseAI* const OwnerCharacter, AAIController* const OwnerController)
 {
-	return sizeof(FBTUpdateMeleeAIMemory);
-}
-
-void UCBTS_UpdateMeleeAI::SetBehavior(EAIBehavior Behavior)
-{
-	CLOG_ERROR_CHECK_RETURN(OwnerController);
-	OwnerController->GetBlackboardComponent()->SetValueAsEnum(BehaviorKey.SelectedKeyName, static_cast<uint8>(Behavior));
-	FString BehaviorText;
-	switch (Behavior)
-	{
-		case EAIBehavior::IDLE:
-		{
-			BehaviorText = L"IDLE";
-		}
-			break;
-		case EAIBehavior::PATROL:
-		{
-			BehaviorText = L"PATROL";
-		}
-			break;
-		case EAIBehavior::MELEE_ATTACK:
-		{
-			BehaviorText = L"MELEE ATTACK";
-		}
-			break;
-		case EAIBehavior::RANGE_ATTACK:
-		{
-			BehaviorText = L"RANGE ATTACK";
-		}
-			break;
-		case EAIBehavior::APPROACH:
-		{
-			BehaviorText = L"APPROACH";
-		}
-			break;
-		case EAIBehavior::FLEE:
-		{
-			BehaviorText = L"FLEE";
-		}
-			break;
-		case EAIBehavior::STRAFE_AROUND:
-		{
-			BehaviorText = L"STRAFE AROUND";
-		}
-			break;
-		case EAIBehavior::HIT:
-		{
-			BehaviorText = L"HIT";
-		}
-			break;
-	}
-
-	if (Behavior != EAIBehavior::STRAFE_AROUND)
-	{
-		TicksStrafe = 0.0f;
-	}
-
-	OnBehaviorChanged.Broadcast(BehaviorText);
-}
-
-void UCBTS_UpdateMeleeAI::Update()
-{
-	UpdateBehavior();
-	UpdateActivities();
-}
-
-void UCBTS_UpdateMeleeAI::UpdateBehavior()
-{
-	CLOG_ERROR_CHECK_RETURN(OwnerCharacter);
-	CLOG_ERROR_CHECK_RETURN(OwnerController);
-
 	// 1. Owner is disable?
 	if (OwnerCharacter->GetStateManagerComponent()->GetState() == EStateType::DISABLED)
 	{
@@ -122,7 +32,24 @@ void UCBTS_UpdateMeleeAI::UpdateBehavior()
 	 
 	// 2. Check the target exist or alive
 	ACCombatCharacter* Target = Cast<ACCombatCharacter>(OwnerController->GetBlackboardComponent()->GetValueAsObject(TargetKey.SelectedKeyName));
-	if ((Target == nullptr) || (Target->IsAlive() == false))
+	if ((Target == nullptr))
+	{
+		// Reset focus
+		OwnerController->SetFocus(nullptr);
+		OwnerCharacter->GetRotatingComponent()->SetRotationMode(ERotationMode::ORIENT_TO_MOVEMENT);
+
+		if (OwnerCharacter->GetPatrolComponent()->IsPatrolPathValid())
+		{
+			SetBehavior(EAIBehavior::PATROL);
+			return;
+		}
+		else
+		{
+			SetBehavior(EAIBehavior::IDLE);
+			return;
+		}
+	}
+	else if (Target->IsAlive() == false)
 	{
 		// Reset focus
 		OwnerController->SetFocus(nullptr);
@@ -277,7 +204,7 @@ void UCBTS_UpdateMeleeAI::UpdateBehavior()
 	}
 }
 
-void UCBTS_UpdateMeleeAI::UpdateActivities()
+void UCBTS_UpdateMeleeAI::UpdateActivities(ACBaseAI* const OwnerCharacter, AAIController* const OwnerController)
 {
 	if (OwnerCharacter == nullptr) return;
 	if (OwnerController == nullptr) return;
@@ -329,24 +256,5 @@ void UCBTS_UpdateMeleeAI::UpdateActivities()
 			OwnerCharacter->GetStateManagerComponent()->SetActivity(EActivity::IS_BLOCKING_PRESSED, false);
 		}
 			break;
-	}
-}
-
-void UCBTS_UpdateMeleeAI::OnStateChanged(EStateType PrevState, EStateType NewState)
-{
-	if ((PrevState == EStateType::DISABLED) || (NewState == EStateType::DISABLED))
-	{
-		Update();
-	}
-}
-
-void UCBTS_UpdateMeleeAI::OnStaminaValueChanged(float NewValue, float MaxValue)
-{
-	// 스테미나 부족 할 경우
-	if (NewValue <= 0.0f)
-	{
-		GetWorld()->GetTimerManager().ClearTimer(OutOfStaminaResetHandler);
-		bIsOutOfStamina = true;
-		GetWorld()->GetTimerManager().SetTimer(OutOfStaminaResetHandler, this, &UCBTS_UpdateMeleeAI::ResetIsOutOfStamina, 2.0f, false);
 	}
 }

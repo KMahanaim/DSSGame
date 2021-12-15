@@ -17,15 +17,7 @@ void UCAN_ToggleCombat::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBa
 	CLOG_CHECK_RETURN(MeshComp->GetOwner());
 
 	UCEquipmentComponent* Equipment = Cast<UCEquipmentComponent>(MeshComp->GetOwner()->GetComponentByClass(UCEquipmentComponent::StaticClass()));
-	if (Equipment != nullptr)
-	{
-		if (bIsInCombat)
-		{
-			Equipment->SetIsInCombat(bIsInCombat);
-		}
-		else
-		{
-			Equipment->SetIsInCombat(bIsInCombat);
-		}
-	}
+	CLOG_ERROR_CHECK_RETURN(Equipment);
+
+	Equipment->SetIsInCombat(bIsInCombat);
 }

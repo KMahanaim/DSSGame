@@ -24,6 +24,7 @@ enum class EInputBufferKey : uint8
 	SWITCH_WEAPON_RIGHT,
 	ABILITY_ATTACK,
 	SET_SPELL_ACTIVE,
+	INTERACTION,
 };
 
 UCLASS()

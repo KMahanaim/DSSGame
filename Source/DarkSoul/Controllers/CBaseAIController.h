@@ -20,28 +20,33 @@ class DARKSOUL_API ACBaseAIController : public AAIController
 {
 	GENERATED_BODY()
 
-private:
+protected:
 	UPROPERTY(VisibleAnywhere)
 		class UAIPerceptionComponent* Perception;
 
 	UPROPERTY(VisibleAnywhere)
 		class UAISenseConfig_Sight* Sight;
 
-private:
+protected:
 	UFUNCTION()
-		void OnSensingTarget(AActor* Actor, FAIStimulus Stimulus);
+		virtual void OnSensingTarget(AActor* Actor, FAIStimulus Stimulus);
 
 public:
 	ACBaseAIController();
 
 protected:
 	virtual void BeginPlay() override;
+	/** Reset Detection Criteria */
+	void InitSenseSight();
 	/** 빙의 시작 */
 	virtual void OnPossess(APawn* InPawn) override;
 	/** 빙의 해제 */
 	virtual void OnUnPossess() override;
 	/** 이동 요청 완료 보고 */
 	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
+
+public:
+	void Attacked(AActor* DamageCauser);
 
 private:
 	void OnInCombatChanged(bool bIsInCombat);
@@ -50,10 +55,11 @@ private:
 public:
 	FOnSuccessPatrolMove OnSuccessPatrolMove;
 
-private:
+protected:
 	UBehaviorTree* BehaviorTree;
 	UBlackboardData* BlackBoard;
 	UPatrolComponent* PatrolComponent;
 
+private:
 	FTimerHandle TargetMemoryRetentionTimerHandle;
 };

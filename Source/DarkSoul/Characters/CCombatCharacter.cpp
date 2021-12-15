@@ -17,8 +17,8 @@
 /// Unreal Engine
 #include "TimerManager.h"
 #include "Engine/World.h"
-#include "NiagaraComponent.h"
 #include "DrawDebugHelpers.h"
+#include "Sound/SoundWave.h"
 #include "Curves/CurveFloat.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -36,7 +36,7 @@ ACCombatCharacter::ACCombatCharacter()
 	// Create Components
 	{
 		Effects = CreateDefaultSubobject<UCEffectsComponent>(FName("Effects"));
-		Dissolve = CreateDefaultSubobject<UCDissolveComponent>(FName("Dissolve"));
+		//Dissolve = CreateDefaultSubobject<UCDissolveComponent>(FName("Dissolve"));
 
 		Equipment = CreateDefaultSubobject<UCEquipmentComponent>(FName("Equipment"));
 		StateManager = CreateDefaultSubobject<UCStateManagerComponent>(FName("StateManager"));
@@ -52,7 +52,7 @@ ACCombatCharacter::ACCombatCharacter()
 		ExtendedHealth = CreateDefaultSubobject<UCExtendedStatComponent>(FName("ExtendedHealth"));
 		ExtendedStamina = CreateDefaultSubobject<UCExtendedStatComponent>(FName("ExtendedStamina"));
 
-		NiagaraSystem = CreateDefaultSubobject<UNiagaraComponent>(FName("NiagaraSystem"));
+		//NiagaraSystem = CreateDefaultSubobject<UNiagaraComponent>(FName("NiagaraSystem"));
 	}
 
 	// Set Components Attach
@@ -142,8 +142,7 @@ bool ACCombatCharacter::TakeDamage(const FHitData& HitData, EAttackResult& OutRe
 					// Sound play
 					if (bApplied)
 					{
-						// 미구현
-						// 사운드 재생
+						UGameplayStatics::PlaySound2D(this, ParrySound);
 					}
 				}
 
@@ -165,8 +164,8 @@ bool ACCombatCharacter::TakeDamage(const FHitData& HitData, EAttackResult& OutRe
 			if (IsAlive() && bIsBlocked)
 			{
 				CLOG_FUNC_TEXT(L"Blocked");
-				// 미구현
-				// 사운드 재생
+
+				UGameplayStatics::PlaySound2D(this, BlockSound);
 				Block();
 
 				if (ExtendedStamina->GetCurrentValue() > 0.0f)
@@ -185,6 +184,7 @@ bool ACCombatCharacter::TakeDamage(const FHitData& HitData, EAttackResult& OutRe
 				return false;
 			}
 
+			UGameplayStatics::PlaySound2D(this, HitSound);
 			OutResultType = EAttackResult::SUCCESS;
 			return true;
 		}
@@ -470,24 +470,6 @@ void ACCombatCharacter::HandleMeshOnDeath()
 			TwinWeapon->SimulatePhysics();
 		}
 	}
-
-	// Dissolve all attached actors and character mesh
-	CLOG_FUNC;
-	for (int32 Index = 0; Index < AttachedActors.Num(); Index++)
-	{
-		AActor* AttachedActor = AttachedActors[Index];
-		if (AttachedActor != nullptr)
-		{
-
-		}
-	}
-
-	Dissolve->StartDissolve(GetMesh());
-	//GetWorldTimerManager().SetTimer(DissolveDelayHandle, FTimerDelegate::CreateLambda([&]()
-	//{
-	//	
-
-	//}), DissolveDelayTime, false);
 }
 
 void ACCombatCharacter::Block()
