@@ -47,4 +47,10 @@ protected:
 
 public:
 	void Interaction();
+
+private:
+	void OpenLevel();
+
+private:
+	FTimerHandle LevelOpenDelayTimerHandle;
 };

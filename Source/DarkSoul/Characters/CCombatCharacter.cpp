@@ -2,6 +2,7 @@
 #include "CCombatCharacter.h"
 #include "DarkSoul/_Utility/CLog.h"
 #include "DarkSoul/Items/Weapons/CItemWeapon.h"
+#include "DarkSoul/Projectiles/CMagicProjectile.h"
 #include "DarkSoul/Components/CEffectsComponent.h"
 #include "DarkSoul/Components/CDissolveComponent.h"
 #include "DarkSoul/Components/CRotatingComponent.h"
@@ -51,8 +52,6 @@ ACCombatCharacter::ACCombatCharacter()
 		ExtendedMana = CreateDefaultSubobject<UCExtendedStatComponent>(FName("ExtendedMana"));
 		ExtendedHealth = CreateDefaultSubobject<UCExtendedStatComponent>(FName("ExtendedHealth"));
 		ExtendedStamina = CreateDefaultSubobject<UCExtendedStatComponent>(FName("ExtendedStamina"));
-
-		//NiagaraSystem = CreateDefaultSubobject<UNiagaraComponent>(FName("NiagaraSystem"));
 	}
 
 	// Set Components Attach
@@ -281,14 +280,26 @@ void ACCombatCharacter::ToggleCombat(float& OutMontagePlayTime)
 	}
 }
 
+void ACCombatCharacter::CastComplete()
+{
+	FVector Location = GetActorLocation();
+	Location.Z = 0.0f;
+	AActor* Projectile = GetWorld()->SpawnActor<AActor>(Magic, FVector(Location + GetActorForwardVector() * 20), GetActorRotation());
+	ACMagicProjectile* MagicProjectile = Cast<ACMagicProjectile>(Projectile);
+	if (MagicProjectile != nullptr)
+	{
+		MagicProjectile->Fire(GetActorRotation());
+	}
+}
+
 void ACCombatCharacter::RollAction()
 {
 	CLOG_ERROR_FUNC_TEXT(L"Should be override RollAction Function");
 }
 
-float ACCombatCharacter::MeleeAttackAction(EMeleeAttackType AttackType)
+float ACCombatCharacter::AttackAction(EAttackType NewAttackType)
 {
-	CLOG_ERROR_FUNC_TEXT(L"Should be override MeleeAttackAction Function");
+	CLOG_ERROR_FUNC_TEXT(L"Should be override AttackAction Function");
 	return 0.0f;
 }
 
@@ -297,38 +308,43 @@ void ACCombatCharacter::WeaponSwitchAction(EWeaponSwitchType SwitchType)
 	CLOG_ERROR_FUNC_TEXT(L"Should be override WeaponSwitchAction Function");
 }
 
-EMontageAction ACCombatCharacter::ConvertMeleeAttackTypeToAction(EMeleeAttackType AttackType)
+EMontageAction ACCombatCharacter::ConvertAttackTypeToAction(EAttackType ConvertAttackType)
 {
-	switch (AttackType)
+	switch (ConvertAttackType)
 	{
-		case EMeleeAttackType::NONE:
+		case EAttackType::NONE:
 		{
 			return EMontageAction::NONE;
 		}
 		break;
-		case EMeleeAttackType::LIGHT:
+		case EAttackType::LIGHT:
 		{
 			return EMontageAction::LIGHT_ATTACK;
 		}
 		break;
-		case EMeleeAttackType::HEAVY:
+		case EAttackType::HEAVY:
 		{
 			return EMontageAction::HEAVY_ATTACK;
 		}
 		break;
-		case EMeleeAttackType::SPECIAL:
+		case EAttackType::SPECIAL:
 		{
 			return EMontageAction::SPECIAL_ATTACK;
 		}
 		break;
-		case EMeleeAttackType::THRUST:
+		case EAttackType::THRUST:
 		{
 			return EMontageAction::THRUST_ATTACK;
 		}
 		break;
-		case EMeleeAttackType::FALLING:
+		case EAttackType::FALLING:
 		{
 			return EMontageAction::FALLING_ATTACK;
+		}
+		break;
+		case EAttackType::MAGIC:
+		{
+			return EMontageAction::MAGIC_CASTING;
 		}
 		break;
 		default:
@@ -342,7 +358,7 @@ EMontageAction ACCombatCharacter::ConvertMeleeAttackTypeToAction(EMeleeAttackTyp
 void ACCombatCharacter::ConvertHitResultToHitData(const FHitResult& HitResult, FHitData& OutHitData)
 {
 	float Damage = StatsManager->GetDamage();
-	OutHitData.Damage = ScaleMeleeDamageByType(Damage);
+	OutHitData.Damage = ScaleDamageByType(Damage);
 	OutHitData.DamageCauser = Cast<AActor>(this);
 
 	// 공격 방향 얻기
@@ -351,44 +367,49 @@ void ACCombatCharacter::ConvertHitResultToHitData(const FHitResult& HitResult, F
 	FVector Direction = HitActorLocation - AttackActorLocation;
 	Direction.Normalize();
 	OutHitData.HitFromDirection = Direction;
-	if (MeleeAttackType == EMeleeAttackType::LIGHT)
+	if (AttackType == EAttackType::LIGHT)
 	{
 		OutHitData.bCanBeParried = true;
 	}
 }
 
-const float ACCombatCharacter::ScaleMeleeDamageByType(const float Damage) const
+const float ACCombatCharacter::ScaleDamageByType(const float Damage) const
 {
-	switch (MeleeAttackType)
+	switch (AttackType)
 	{
-		case EMeleeAttackType::NONE:
+		case EAttackType::NONE:
 		{
 			return Damage * 1.0f;
 		}
 		break;
-		case EMeleeAttackType::LIGHT:
+		case EAttackType::LIGHT:
 		{
 			return Damage * 1.0f;
 		}
 		break;
-		case EMeleeAttackType::HEAVY:
+		case EAttackType::HEAVY:
 		{
 			return Damage * 1.5f;
 		}
 		break;
-		case EMeleeAttackType::SPECIAL:
+		case EAttackType::SPECIAL:
 		{
 			return Damage * 1.5f;
 		}
 		break;
-		case EMeleeAttackType::THRUST:
+		case EAttackType::THRUST:
 		{
 			return Damage * 1.0f;
 		}
 		break;
-		case EMeleeAttackType::FALLING:
+		case EAttackType::FALLING:
 		{
 			return Damage * 1.0f;
+		}
+		break;
+		case EAttackType::MAGIC:
+		{
+			return Damage * 1.5f;
 		}
 		break;
 		default:
@@ -399,32 +420,37 @@ const float ACCombatCharacter::ScaleMeleeDamageByType(const float Damage) const
 	}
 }
 
-const float ACCombatCharacter::ScaleMeleeAttackStaminaCostByType(float Cost, EMeleeAttackType AttackType)
+const float ACCombatCharacter::ScaleAttackStaminaCostByType(float Cost, EAttackType TargetAttackType)
 {
 	float Result = Cost;
 
-	switch (AttackType)
+	switch (TargetAttackType)
 	{
-		case EMeleeAttackType::HEAVY:
+		case EAttackType::HEAVY:
 		{
 			Result *= 1.75;
 		}
 			break;
-		case EMeleeAttackType::SPECIAL:
+		case EAttackType::SPECIAL:
 		{
 			Result *= 1.75;
 		}
 			break;
-		case EMeleeAttackType::THRUST:
+		case EAttackType::THRUST:
 		{
 			Result *= 1.75;
 		}
 			break;
-		case EMeleeAttackType::FALLING:
+		case EAttackType::FALLING:
 		{
 			Result *= 0.75;
 		}
 			break;
+		default:
+		{
+			Result = 0.0f;
+		}
+		break;
 	}
 
 	return Result;
@@ -478,7 +504,7 @@ void ACCombatCharacter::Block()
 	if (BlockMontage != nullptr)
 	{
 		PlayAnimMontage(BlockMontage);
-		ResetMeleeAttackCount();
+		ResetAttackCount();
 	}
 }
 
@@ -663,10 +689,10 @@ UAnimMontage* ACCombatCharacter::GetBlockMontage()
 	return MontageManager->GetMontageforAction(EMontageAction::BLOCK);
 }
 
-UAnimMontage* ACCombatCharacter::GetMeleeAttackMontage(EMeleeAttackType AttackType)
+UAnimMontage* ACCombatCharacter::GetMeleeAttackMontage(EAttackType TargetAttackType)
 {
 	UAnimMontage* Result = nullptr;
- 	EMontageAction Action = ConvertMeleeAttackTypeToAction(AttackType);
+ 	EMontageAction Action = ConvertAttackTypeToAction(TargetAttackType);
 	int8 LastIndex = MontageManager->GetMontageActionLastIndex(Action);
 	if (MeleeAttackCount > LastIndex)
 	{
@@ -898,7 +924,7 @@ void ACCombatCharacter::OnCollisionActivated()
 	const FWeaponSocket* WeaponSocket = Weapon->GetWeaponSocket();
 	CLOG_ERROR_CHECK_RETURN(WeaponSocket);
 
-	if (Weapon->GetWeaponType() == EWeaponType::UNARMED)
+	if ((Weapon->GetWeaponType() == EWeaponType::UNARMED) || (Weapon->GetWeaponType() == EWeaponType::BODY_WEAPON))
 	{
 		CollisionHandler->AddMeshCollision(GetMesh(), WeaponSocket);
 	}

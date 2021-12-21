@@ -10,6 +10,7 @@ DECLARE_DELEGATE(FPlayInteraction)
 DECLARE_DELEGATE(FOffInteractionMassage)
 DECLARE_DELEGATE_OneParam(FOnInteractionMassage, FInteractionMassage)
 DECLARE_MULTICAST_DELEGATE(FToggleHUD)
+DECLARE_MULTICAST_DELEGATE(FOnLoading)
 
 class UCurveFloat;
 class UCameraComponent;
@@ -90,10 +91,12 @@ public:
 
 	/** Action */
 	virtual void RollAction() final;
-	virtual float MeleeAttackAction(EMeleeAttackType AttackType) final;
+	virtual float AttackAction(EAttackType NewAttackType) final;
 	virtual void WeaponSwitchAction(EWeaponSwitchType SwitchType) final;
 
-	void OnBeginLoading() { bIsInLoading = true; }
+	void OnCinematic();
+	void EndCinematic();
+	void OnBeginLoading();
 
 private:
 	/** Defense */
@@ -129,9 +132,6 @@ private:
 	/** Interaction */
 	virtual void Interaction() final;
 
-	/** HUD Hide */
-	void HUDHide();
-
 	/** Key Input Action */
 	void Run();
 	void Roll();
@@ -145,6 +145,9 @@ private:
 	void ToggleLockOn();
 	void ChangeToUpAndDownTarget(float AxisValue);
 	void ChangeToRightAndLeftTarget(float AxisValue);
+
+	/** HUD Hide */
+	void HUDHide();
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // Delegate Bind Functions
@@ -169,6 +172,7 @@ private:
 	virtual void OnEffectRemoved(EEffectType Type) final;
 
 private:
+	bool bIsKeyBlock = false;
 	bool bIsInLoading = false;
 	/** Block(Defense) Play Duration, 1.0f = Defense On */
 	float BlockAlpha = 0.0f;
@@ -180,6 +184,7 @@ private:
 
 public:
 	/** Delegate */
+	FOnLoading OnLoading;
 	FToggleHUD ToggleHUD;
 	FPlayInteraction PlayInteraction;
 	FOnInteractionMassage OnInteractionMassage;

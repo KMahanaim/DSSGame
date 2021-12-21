@@ -4,18 +4,16 @@
 #include "DarkSoul/Widgets/CUW_StatBars.h"
 #include "DarkSoul/Widgets/CUW_ItemSlots.h"
 #include "DarkSoul/Widgets/CUW_Interaction.h"
+#include "DarkSoul/Widgets/CUW_BossStatBar.h"
 #include "DarkSoul/Characters/CPlayerCharacter.h"
 #include "DarkSoul/Components/CEquipmentComponent.h"
-#include "DarkSoul/Components/CSpriteComponent.h"
+#include "DarkSoul/Components/CGameLoadingComponent.h"
 
 /// Unreal Engine
-#include "PaperSprite.h"
-#include "PaperFlipbook.h"
 #include "Engine/World.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "UObject/ConstructorHelpers.h"
-#include "Materials/MaterialInterface.h"
 
 ACHUDInGame::ACHUDInGame()
 {
@@ -31,9 +29,9 @@ ACHUDInGame::ACHUDInGame()
 		}
 	}
 
-	// Create Components
+	// Create Component
 	{
-		SpriteManager = CreateDefaultSubobject<UCSpriteComponent>(FName("SpriteManager"));
+		LoadingManager = CreateDefaultSubobject<UCGameLoadingComponent>(FName("LoadingManager"));
 	}
 }
 
@@ -56,6 +54,7 @@ void ACHUDInGame::BeginPlay()
 
 	// Delegate Bind
 	{
+		Player->OnLoading.AddUObject(this, &ACHUDInGame::OnLoading);
 		Player->ToggleHUD.AddUObject(this, &ACHUDInGame::ToggleHUD);
 		PlayerEquipment->OnWeaponChanged.AddUObject(this, &ACHUDInGame::OnWeaponChanged);
 	}
@@ -91,17 +90,15 @@ void ACHUDInGame::BeginPlay()
 			Player->OnInteractionMassage.BindUObject(InteractionMassage, &UCUW_Interaction::OnInteraction);
 			Player->OffInteractionMassage.BindUObject(InteractionMassage, &UCUW_Interaction::OffInteraction);
 		}
-	}
 
-	// Setting Sprite Manager
-	{
-		if (LoadingIcon == nullptr)
+		BossStatBar = Cast<UCUW_BossStatBar>(CurrentWidget->GetWidgetFromName(FName("BossStatBar")));
+		if (BossStatBar != nullptr)
 		{
-			CLOG_FUNC_TEXT(L"LoadingIcon is nullptr");
+			BossStatBar->SetVisibility(ESlateVisibility::Hidden);
 		}
 		else
 		{
-			SpriteManager->SetPaperFlipbook(LoadingIcon);
+			CLOG_FUNC_TEXT(L"BossStatBar is nullptr");
 		}
 	}
 }
@@ -110,36 +107,49 @@ void ACHUDInGame::DrawHUD()
 {
 	Super::DrawHUD();
 
-	// Draw In Loading Screen
 	CLOG_ERROR_CHECK_RETURN(Player);
 	if (Player->IsInLoading())
 	{
-		CLOG_CHECK_RETURN(LoadingBackground);
 		CLOG_CHECK_RETURN(PlayerOwner);
+		CLOG_CHECK_RETURN(LoadingManager);
 
-		int32 X, Y;
-		PlayerOwner->GetViewportSize(X, Y);
-		DrawMaterialSimple(LoadingBackground, 0, 0, X, Y);
+		// Get Player Viewport Size
+		int32 ViewportSizeX, ViewportSizeY;
+		PlayerOwner->GetViewportSize(ViewportSizeX, ViewportSizeY);
+		DrawMaterialSimple(LoadingManager->GetLoadingBackground(), 0, 0, ViewportSizeX, ViewportSizeY);
 
-		// Loading Icon Sprite Play
-		UPaperSprite* Sprite = SpriteManager->GetCurrentSprite();
-		FVector2D UVTopLeft = Sprite->GetSourceUV();
-		UVTopLeft.X = (1.0f / 8.0f) * (UVTopLeft.X / 128.0f);
-		UVTopLeft.Y = (1.0f / 4.0f) * (UVTopLeft.Y / 128.0f);
-
-		FVector2D UVBottomRight;
-		UVBottomRight.X = 1.0f / 8.0f;
-		UVBottomRight.Y = 1.0f / 4.0f;
+		// Get Texture UV
+		FVector2D UVTopLeft, UVBottomRight;
+		LoadingManager->GetTextureUV(UVTopLeft, UVBottomRight);
 
 		DrawTexture
 		(
-			Sprite->GetSourceTexture(), 
-			X - 200, Y - 200,					/** Screen Location X, Y */
-			128, 128,							/** Draw Size */
-			UVTopLeft.X, UVTopLeft.Y,			/** Texture UV Left(X), Top(Y)*/
-			UVBottomRight.X, UVBottomRight.Y	/** Texture UV Right(X), Bottom(Y) */
+			LoadingManager->GetResourceTexture2D(),
+			ViewportSizeX - LoadingManager->GetLoadingIconLocation().X,			/** Screen Location X */
+			ViewportSizeY - LoadingManager->GetLoadingIconLocation().Y,			/** Screen Location Y */
+			LoadingManager->GetDrawSize().X, LoadingManager->GetDrawSize().Y,	/** Draw Size */
+			UVTopLeft.X, UVTopLeft.Y,					/** Texture UV Left(X), Top(Y)*/
+			UVBottomRight.X, UVBottomRight.Y			/** Texture UV Right(X), Bottom(Y) */
 		);
 	}
+}
+
+void ACHUDInGame::HideAllWidget()
+{
+	// All Widget Hide
+	StatBars->SetVisibility(ESlateVisibility::Hidden);
+	BossStatBar->SetVisibility(ESlateVisibility::Hidden);
+	ItemSlots->SetVisibility(ESlateVisibility::Hidden);
+	InteractionMassage->SetVisibility(ESlateVisibility::Hidden);
+}
+
+
+void ACHUDInGame::OnLoading()
+{
+	HideAllWidget();
+
+	// Loading Start
+	LoadingManager->LoadingStart();
 }
 
 void ACHUDInGame::ToggleHUD()

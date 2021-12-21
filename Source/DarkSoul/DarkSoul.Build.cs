@@ -10,13 +10,13 @@ public class DarkSoul : ModuleRules
 	
 		PublicDependencyModuleNames.AddRange(new string[] 
         {
-            /*기본 모듈*/
+            /** 기본 모듈 */
             "Core",
             "CoreUObject",
             "Engine",
             "InputCore", 
 
-            /*추가한 모듈*/
+            /** 추가한 모듈 */
             "NavigationSystem",
             "AIModule",
             "GameplayTasks",
@@ -25,7 +25,9 @@ public class DarkSoul : ModuleRules
             "Slate",
             "SlateCore", 
             "Niagara", 
-            "Paper2D", 
+            "Paper2D",
+            "LevelSequence",
+            "MovieScene", 
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] {  });

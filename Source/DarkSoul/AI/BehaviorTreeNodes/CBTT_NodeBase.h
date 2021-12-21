@@ -5,7 +5,7 @@
 #include "CBTT_NodeBase.generated.h"
 
 class ACBaseAI;
-class ACBaseAIController;
+class AAIController;
 
 /**
  * BaseAI 행동 트리에 들어가는 Task Node 기본
@@ -20,5 +20,5 @@ protected:
 
 protected:
 	ACBaseAI* Owner;
-	ACBaseAIController* OwnerController;
+	AAIController* OwnerController;
 };

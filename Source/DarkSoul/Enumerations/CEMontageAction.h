@@ -16,6 +16,7 @@ enum class EMontageAction : uint8
 	THRUST_ATTACK		UMETA(DisplayName = "ThrustAttack"),
 	SPECIAL_ATTACK		UMETA(DisplayName = "SpecialAttack"),
 	FALLING_ATTACK		UMETA(DisplayName = "FallingAttack"),
+	MAGIC_CASTING		UMETA(DisplayName = "MagicCasting"),
 	ROLL_FORWARD		UMETA(DisplayName = "RollForward"),
 	ROLL_BACKWARD		UMETA(DisplayName = "RollBackward"),
 	DRAW_WEAPON			UMETA(DisplayName = "DrawWeapon"),

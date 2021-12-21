@@ -12,8 +12,8 @@
 #include "DarkSoul/Enumerations/CEStatsType.h"
 #include "DarkSoul/Enumerations/CEStateType.h"
 #include "DarkSoul/Enumerations/CEDirection.h"
+#include "DarkSoul/Enumerations/CEAttackType.h"
 #include "DarkSoul/Enumerations/CEInputBufferKey.h"
-#include "DarkSoul/Enumerations/CEMeleeAttackType.h"
 #include "DarkSoul/Enumerations/CEWeaponSwitchType.h"
 #include "CCombatCharacter.generated.h"
 
@@ -61,6 +61,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Data Table", meta = (AllowPrivateAccess = "true"))
 		UDataTable* WeaponPathTable = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Magic", meta = (AllowPrivateAccess = "true"))
+		TSubclassOf<AActor> Magic;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // Components UPROPERTY
@@ -121,17 +124,18 @@ public:
 	virtual bool TakeDamage(const FHitData& HitData, EAttackResult& OutResultType) override;
 	void ToggleCombat();
 	void ToggleCombat(float& OutMontagePlayTime);
+	void CastComplete();
 	virtual void RollAction();
-	virtual float MeleeAttackAction(EMeleeAttackType AttackType);
+	virtual float AttackAction(EAttackType NewAttackType);
 	virtual void WeaponSwitchAction(EWeaponSwitchType SwitchType);
 
 protected:
-	EMontageAction ConvertMeleeAttackTypeToAction(EMeleeAttackType AttackType);
+	EMontageAction ConvertAttackTypeToAction(EAttackType AttackType);
 	void ConvertHitResultToHitData(const FHitResult& HitResult, FHitData& OutHitData);
-	const float ScaleMeleeDamageByType(const float Damage) const;
-	const float ScaleMeleeAttackStaminaCostByType(float Cost, EMeleeAttackType AttackType);
+	const float ScaleDamageByType(const float Damage) const;
+	const float ScaleAttackStaminaCostByType(float Cost, EAttackType AttackType);
 
-	void ResetMeleeAttackCount() { MeleeAttackCount = 0; }
+	void ResetAttackCount() { MeleeAttackCount = 0; }
 
 	/** Character Death */
 	virtual void Death();
@@ -158,7 +162,7 @@ public:
 	UAnimMontage* GetRollMontage();
 	UAnimMontage* GetStunMontage(EDirection Direction);
 	UAnimMontage* GetBlockMontage();
-	UAnimMontage* GetMeleeAttackMontage(EMeleeAttackType AttackType);
+	UAnimMontage* GetMeleeAttackMontage(EAttackType AttackType);
 
 	/** Get Component */
 	UCExtendedStatComponent* GetExtendedStatComponent(EStatsType Type) const;
@@ -221,11 +225,11 @@ protected:
 	EDirection ReceiveHitDirection = EDirection::FRONT;
 
 	/** Type - LightAttack, HeavyAttack...  */
-	EMeleeAttackType MeleeAttackType = EMeleeAttackType::NONE;
+	EAttackType AttackType = EAttackType::NONE;
 
 	/** Attack Count */
 	uint8 MeleeAttackCount = 0;
-	FTimerHandle ResetMeleeAttackCounterTimerHandle;
+	FTimerHandle ResetAttackCounterTimerHandle;
 
 	/** Reset State Timer */
 	FTimerHandle ResetStateTimerHandle;

@@ -191,13 +191,13 @@ bool ACBaseAI::TakeDamage(const FHitData& HitData, EAttackResult& OutResultType)
 	return Super::TakeDamage(HitData, OutResultType);
 }
 
-float ACBaseAI::MeleeAttackAction(EMeleeAttackType AttackType)
+float ACBaseAI::AttackAction(EAttackType NewAttackType)
 {
 	float MontageDuration = 0.0f;
 
-	MeleeAttackType = AttackType;
+	AttackType = NewAttackType;
 	StateManager->SetState(EStateType::ATTACKING);
-	GetWorldTimerManager().ClearTimer(ResetMeleeAttackCounterTimerHandle);
+	GetWorldTimerManager().ClearTimer(ResetAttackCounterTimerHandle);
 	UAnimMontage* AttackMontage = GetMeleeAttackMontage(AttackType);
 	if (AttackMontage == nullptr)
 	{
@@ -210,11 +210,11 @@ float ACBaseAI::MeleeAttackAction(EMeleeAttackType AttackType)
 	StateManager->ResetState(MontageDuration);
 
 	// Reset Attack Counter
-	GetWorldTimerManager().SetTimer(ResetMeleeAttackCounterTimerHandle, this, &ACBaseAI::ResetMeleeAttackCount, MontageDuration * 1.5f);
+	GetWorldTimerManager().SetTimer(ResetAttackCounterTimerHandle, this, &ACBaseAI::ResetAttackCount, MontageDuration * 1.5f);
 
 	// Remove Stamina
 	float StaminaCost = StatsManager->GetStatValue(EStatsType::MELEE_ATTACK_STAMINA_COST, true);
-	StaminaCost = ScaleMeleeAttackStaminaCostByType(StaminaCost, MeleeAttackType);
+	StaminaCost = ScaleAttackStaminaCostByType(StaminaCost, AttackType);
 	ExtendedStamina->ModifyStat(StaminaCost * -1.0f, true);
 
 	return MontageDuration;

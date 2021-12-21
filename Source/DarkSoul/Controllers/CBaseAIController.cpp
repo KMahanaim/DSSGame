@@ -16,8 +16,6 @@
 
 ACBaseAIController::ACBaseAIController()
 {
-	CLOG_FUNC;
-
 	// 1. Team ID Settings
 	{
 		/// 1 : Player, 2 : Monster, 3 : Neutral(Áß¸³)

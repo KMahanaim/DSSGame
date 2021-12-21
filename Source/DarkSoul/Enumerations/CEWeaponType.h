@@ -16,7 +16,10 @@ enum class EWeaponType : uint8
 	UNARMED			UMETA(DisplayName = "Unarmed"),
 	TWIN_SWORD		UMETA(DisplayName = "TwinSword"),
 	TWIN_BLADES		UMETA(DisplayName = "TwinBlades"),
+
+	/** Monster Weapons */
 	SWORD			UMETA(DisplayName = "Sword"),
+	BODY_WEAPON		UMETA(DisplayName = "BodyWeapon"), 
 };
 
 UCLASS()

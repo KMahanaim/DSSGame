@@ -7,15 +7,12 @@
 /// Unreal Engine
 #include "TimerManager.h"
 #include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
 #include "UObject/ConstructorHelpers.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
 #include "Perception/AIPerceptionComponent.h"
-
-void ACBossAIController::OnSensingTarget(AActor * Actor, FAIStimulus Stimulus)
-{
-}
 
 ACBossAIController::ACBossAIController()
 {
@@ -27,7 +24,7 @@ ACBossAIController::ACBossAIController()
 
 	// 2. Create Behavior Tree and BlackBoard
 	{
-		FString Path = L"BehaviorTree'/Game/DarkSoul/AI/Melee/BT_MeleeAI.BT_MeleeAI'";
+		FString Path = L"BehaviorTree'/Game/DarkSoul/AI/GruxElite/BT_GruxElite.BT_GruxElite'";
 		static ConstructorHelpers::FObjectFinder<UBehaviorTree> BehaviorTreeObject(*Path);
 		if (BehaviorTreeObject.Succeeded())
 		{
@@ -60,9 +57,9 @@ void ACBossAIController::BeginPlay()
 void ACBossAIController::InitSenseSight()
 {
 	/// Set Detection Range
-	Sight->SightRadius = 3000.0f;								/// 시야 거리
+	Sight->SightRadius = 5000.0f;								/// 시야 거리
 	Sight->PeripheralVisionAngleDegrees = 180.0f;				/// 시야 각도
-	Sight->LoseSightRadius = 3000.0f;							/// 추적 최대 거리
+	Sight->LoseSightRadius = 10000.0f;							/// 추적 최대 거리
 	Sight->SetMaxAge(20.0f);									/// 추적 상태 유지 시간
 
 	/// Set Detection Target
@@ -83,9 +80,27 @@ void ACBossAIController::OnPossess(APawn* InPawn)
 	{
 		RunBehaviorTree(BehaviorTree);
 	}
+
+	// Delegate Bind, Add
+	{
+		Perception->OnTargetPerceptionUpdated.AddDynamic(this, &ACBossAIController::OnSensingTarget);
+	}
 }
 
 void ACBossAIController::OnUnPossess()
 {
 	Super::OnUnPossess();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+// UFunction
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ACBossAIController::OnSensingTarget(AActor* Actor, FAIStimulus Stimulus)
+{
+	if (Stimulus.WasSuccessfullySensed())
+	{
+		// Target Detection
+		Blackboard->SetValueAsObject("Target", Actor);
+	}
 }

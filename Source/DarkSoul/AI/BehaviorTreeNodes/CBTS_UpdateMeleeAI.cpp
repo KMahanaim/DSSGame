@@ -85,7 +85,7 @@ void UCBTS_UpdateMeleeAI::UpdateBehavior(ACBaseAI* const OwnerCharacter, AAICont
 		bIsInAttackRange = true;
 	}
 
-	// 4. Owner is behind the target?
+	// 4. Is behind the target?
 	if (DotProductToTarget <= -0.25f)
 	{
 		// Yes! Back Attack!

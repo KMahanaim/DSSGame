@@ -14,4 +14,7 @@ class DARKSOUL_API ADarkSoulGameModeBase : public AGameModeBase
 	
 public:
 	ADarkSoulGameModeBase();
+
+private:
+
 };

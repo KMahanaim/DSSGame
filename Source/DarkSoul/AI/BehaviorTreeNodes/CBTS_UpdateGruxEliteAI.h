@@ -11,6 +11,13 @@ UCLASS()
 class DARKSOUL_API UCBTS_UpdateGruxEliteAI : public UCBTS_UpdateBaseAI
 {
 	GENERATED_BODY()
+
+private:
+	UPROPERTY(EditAnywhere, Category = "Combat", meta = (ClampMax = 1.0f, ClampMin = 0.0f, UIMax = 1.0f, UIMin = 0.0f), meta = (AllowPrivateAccess = "true"))
+		float RangeAttackWeight = 0.8f;
+
+	UPROPERTY(EditAnywhere, Category = "Combat", meta = (ClampMax = 1.0f, ClampMin = 0.0f, UIMax = 1.0f, UIMin = 0.0f), meta = (AllowPrivateAccess = "true"))
+		float ResetNearTargetTimeWeight = 0.4f;
 	
 private:
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;

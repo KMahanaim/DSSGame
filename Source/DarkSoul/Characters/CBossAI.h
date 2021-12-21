@@ -2,6 +2,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Characters/CBaseAI.h"
+#include "DarkSoul/Interfaces/I_CBoss.h"
 #include "CBossAI.generated.h"
 
 class UCBossPhaseComponent;
@@ -10,12 +11,9 @@ class UCBossPhaseComponent;
  * Boss Base Class
  */
 UCLASS()
-class DARKSOUL_API ACBossAI : public ACBaseAI
+class DARKSOUL_API ACBossAI : public ACBaseAI, public II_CBoss
 {
 	GENERATED_BODY()
-
-	// 보스 전용 UI가 표시되어야 한다.
-	// 페이즈를 정해줄 클래스 혹은 구조체가 필요하다.
 
 	UPROPERTY(EditDefaultsOnly, Category = "Boss", meta = (AllowPrivateAccess = "true"))
 		FName BossName = "None";
@@ -31,6 +29,9 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+
+public:
+	virtual void BossStart() override;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // Get, Set Functions

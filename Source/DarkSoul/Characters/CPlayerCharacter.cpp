@@ -205,7 +205,7 @@ void ACPlayerCharacter::RollAction()
 	}
 }
 
-float ACPlayerCharacter::MeleeAttackAction(EMeleeAttackType AttackType)
+float ACPlayerCharacter::AttackAction(EAttackType NewAttackType)
 {
 	float MontagePlayTime = 0.0f;
 
@@ -213,30 +213,30 @@ float ACPlayerCharacter::MeleeAttackAction(EMeleeAttackType AttackType)
 	{
 		if (GetCharacterMovement()->IsFalling())
 		{
-			MeleeAttackType = EMeleeAttackType::FALLING;
-			ResetMeleeAttackCount();
+			AttackType = EAttackType::FALLING;
+			ResetAttackCount();
 		}
 		else
 		{
-			MeleeAttackType = AttackType;
+			AttackType = NewAttackType;
 		}
 
 		StateManager->SetState(EStateType::ATTACKING);
-		GetWorldTimerManager().ClearTimer(ResetMeleeAttackCounterTimerHandle);
-		UAnimMontage* AttackMontage = GetMeleeAttackMontage(MeleeAttackType);
+		GetWorldTimerManager().ClearTimer(ResetAttackCounterTimerHandle);
+		UAnimMontage* AttackMontage = GetMeleeAttackMontage(AttackType);
 		if (AttackMontage == nullptr)
 		{
 			StateManager->ResetState(0.0f);
-			ResetMeleeAttackCount();
+			ResetAttackCount();
 		}
 
 		// Reset Attack Counter
 		MontagePlayTime = PlayAnimMontage(AttackMontage, StatsManager->GetStatValue(EStatsType::ATTACK_SPEED, true));
-		GetWorldTimerManager().SetTimer(ResetMeleeAttackCounterTimerHandle, this, &ACPlayerCharacter::ResetMeleeAttackCount, MontagePlayTime * 0.8f);
+		GetWorldTimerManager().SetTimer(ResetAttackCounterTimerHandle, this, &ACPlayerCharacter::ResetAttackCount, MontagePlayTime * 0.8f);
 
 		// Remove Stamina
 		float StaminaCost = StatsManager->GetStatValue(EStatsType::MELEE_ATTACK_STAMINA_COST, true);
-		StaminaCost = ScaleMeleeAttackStaminaCostByType(StaminaCost, MeleeAttackType);
+		StaminaCost = ScaleAttackStaminaCostByType(StaminaCost, AttackType);
 		ExtendedStamina->ModifyStat(StaminaCost * -1.0f, true);
 	}
 
@@ -276,6 +276,24 @@ void ACPlayerCharacter::WeaponSwitchAction(EWeaponSwitchType SwitchType)
 		// Switch Weapon, Change the item slot image and selected weapon
 		Equipment->SwitchWeapon(SwitchType);
 	}
+}
+
+void ACPlayerCharacter::OnCinematic()
+{
+	bIsKeyBlock = true;
+	ToggleHUD.Broadcast();
+}
+
+void ACPlayerCharacter::EndCinematic()
+{
+	bIsKeyBlock = false;
+	ToggleHUD.Broadcast();
+}
+
+void ACPlayerCharacter::OnBeginLoading()
+{
+	bIsInLoading = true;
+	OnLoading.Broadcast();
 }
 
 void ACPlayerCharacter::UpdateBlocking()
@@ -362,6 +380,11 @@ FRotator ACPlayerCharacter::GetDesiredRotation()
 
 void ACPlayerCharacter::MoveForwardOrBackward(float AxisValue)
 {
+	if (bIsKeyBlock)
+	{
+		return;
+	}
+
 	if (IsAlive() == false) return;
 
 	FRotator rotation = GetControlRotation();
@@ -372,6 +395,11 @@ void ACPlayerCharacter::MoveForwardOrBackward(float AxisValue)
 
 void ACPlayerCharacter::MoveRightOrLeft(float AxisValue)
 {
+	if (bIsKeyBlock)
+	{
+		return;
+	}
+
 	if (IsAlive() == false) return;
 
 	FRotator rotation = GetControlRotation();
@@ -382,6 +410,11 @@ void ACPlayerCharacter::MoveRightOrLeft(float AxisValue)
 
 void ACPlayerCharacter::HorizontalLook(float AxisValue)
 {
+	if (bIsKeyBlock)
+	{
+		return;
+	}
+
 	float deltaTime = UGameplayStatics::GetWorldDeltaSeconds(this);
 	AxisValue = HorizontalLookRate * deltaTime * AxisValue;
 	
@@ -403,6 +436,11 @@ void ACPlayerCharacter::HorizontalLook(float AxisValue)
 
 void ACPlayerCharacter::VerticalLook(float AxisValue)
 {
+	if (bIsKeyBlock)
+	{
+		return;
+	}
+
 	float deltaTime = UGameplayStatics::GetWorldDeltaSeconds(this);
 	AxisValue = VerticalLookRate * deltaTime * AxisValue;
 
@@ -424,24 +462,34 @@ void ACPlayerCharacter::VerticalLook(float AxisValue)
 
 void ACPlayerCharacter::Interaction()
 {
+	if (bIsKeyBlock)
+	{
+		return;
+	}
+
 	if (PlayInteraction.IsBound())
 	{
 		InputBuffer->UpdateKey(EInputBufferKey::INTERACTION);
 	}
 }
 
-void ACPlayerCharacter::HUDHide()
-{
-	ToggleHUD.Broadcast();
-}
-
 void ACPlayerCharacter::Run()
 {
+	if (bIsKeyBlock)
+	{
+		return;
+	}
+
 	MovementSpeed->SetMovementState(EMovementState::RUN);
 }
 
 void ACPlayerCharacter::Roll()
 {
+	if (bIsKeyBlock)
+	{
+		return;
+	}
+
 	if (MovementSpeed->GetMovementState() == EMovementState::RUN)
 	{
 		MovementSpeed->SetMovementState(EMovementState::JOG);
@@ -454,6 +502,11 @@ void ACPlayerCharacter::Roll()
 
 void ACPlayerCharacter::LightAttack()
 {
+	if (bIsKeyBlock)
+	{
+		return;
+	}
+
 	const bool bisInCombat = Equipment->IsInCombat();
 	if (bisInCombat)
 	{
@@ -471,6 +524,11 @@ void ACPlayerCharacter::LightAttack()
 
 void ACPlayerCharacter::HeavyAttack()
 {
+	if (bIsKeyBlock)
+	{
+		return;
+	}
+
 	const bool bisInCombat = Equipment->IsInCombat();
 	if (bisInCombat)
 	{
@@ -488,21 +546,41 @@ void ACPlayerCharacter::HeavyAttack()
 
 void ACPlayerCharacter::StartBlocking()
 {
+	if (bIsKeyBlock)
+	{
+		return;
+	}
+
 	StateManager->SetActivity(EActivity::IS_BLOCKING_PRESSED, true);
 }
 
 void ACPlayerCharacter::StopBlocking()
 {
+	if (bIsKeyBlock)
+	{
+		return;
+	}
+
 	StateManager->SetActivity(EActivity::IS_BLOCKING_PRESSED, false);
 }
 
 void ACPlayerCharacter::ToggleDrawWeapon()
 {
+	if (bIsKeyBlock)
+	{
+		return;
+	}
+
 	InputBuffer->UpdateKey(EInputBufferKey::TOGGLE_COMBAT);
 }
 
 void ACPlayerCharacter::WeaponSwitchLeft()
 {
+	if (bIsKeyBlock)
+	{
+		return;
+	}
+
 	if (StateManager->IsStateEqual(EStateType::IDLE))
 	{
 		InputBuffer->UpdateKey(EInputBufferKey::SWITCH_WEAPON_LEFT);
@@ -511,6 +589,11 @@ void ACPlayerCharacter::WeaponSwitchLeft()
 
 void ACPlayerCharacter::WeaponSwitchRight()
 {
+	if (bIsKeyBlock)
+	{
+		return;
+	}
+
 	if (StateManager->IsStateEqual(EStateType::IDLE))
 	{
 		InputBuffer->UpdateKey(EInputBufferKey::SWITCH_WEAPON_RIGHT);
@@ -519,6 +602,11 @@ void ACPlayerCharacter::WeaponSwitchRight()
 
 void ACPlayerCharacter::ToggleLockOn()
 {
+	if (bIsKeyBlock)
+	{
+		return;
+	}
+
 	Targeting->ToggleLockOn();
 
 	if (Targeting->IsLockOnActivity())
@@ -533,12 +621,32 @@ void ACPlayerCharacter::ToggleLockOn()
 
 void ACPlayerCharacter::ChangeToUpAndDownTarget(float AxisValue)
 {
+	if (bIsKeyBlock)
+	{
+		return;
+	}
+
 	Targeting->ChangeToUpAndDownTarget(AxisValue);
 }
 
 void ACPlayerCharacter::ChangeToRightAndLeftTarget(float AxisValue)
 {
+	if (bIsKeyBlock)
+	{
+		return;
+	}
+
 	Targeting->ChangeToRightAndLeftTarget(AxisValue);
+}
+
+void ACPlayerCharacter::HUDHide()
+{
+	if (bIsKeyBlock)
+	{
+		return;
+	}
+
+	ToggleHUD.Broadcast();
 }
 
 void ACPlayerCharacter::OnInputBufferClose()
@@ -558,27 +666,27 @@ void ACPlayerCharacter::OnInputBufferConsumed(EInputBufferKey Key)
 		{
 			case EInputBufferKey::LIGHT_ATTACK:
 			{
-				MeleeAttackAction(EMeleeAttackType::LIGHT);
+				AttackAction(EAttackType::LIGHT);
 			}
 			break;
 			case EInputBufferKey::HEAVY_ATTACK:
 			{
-				MeleeAttackAction(EMeleeAttackType::HEAVY);
+				AttackAction(EAttackType::HEAVY);
 			}
 			break;
 			case EInputBufferKey::THRUST_ATTACK:
 			{
-				MeleeAttackAction(EMeleeAttackType::THRUST);
+				AttackAction(EAttackType::THRUST);
 			}
 			break;
 			case EInputBufferKey::SPECIAL_ATTACK:
 			{
-				MeleeAttackAction(EMeleeAttackType::SPECIAL);
+				AttackAction(EAttackType::SPECIAL);
 			}
 			break;
 			case EInputBufferKey::FALLING_ATTACK:
 			{
-				MeleeAttackAction(EMeleeAttackType::FALLING);
+				AttackAction(EAttackType::FALLING);
 			}
 			break;
 			case EInputBufferKey::ROLL:
@@ -651,7 +759,7 @@ void ACPlayerCharacter::OnStateChanged(EStateType PrevState, EStateType NewState
 	UpdateBlocking();
 	if (PrevState == EStateType::ATTACKING)
 	{
-		MeleeAttackType = EMeleeAttackType::NONE;
+		AttackType = EAttackType::NONE;
 	}
 }
 
@@ -688,7 +796,7 @@ void ACPlayerCharacter::OnEffectApplied(EEffectType Type)
 	Super::OnEffectApplied(Type);
 
 	InputBuffer->UpdateKey(EInputBufferKey::NONE);
-	ResetMeleeAttackCount();
+	ResetAttackCount();
 	InputBuffer->OpenInputBuffer();
 }
 

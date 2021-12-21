@@ -4,12 +4,16 @@
 #include "DarkSoul/Characters/CPlayerCharacter.h"
 
 /// Unreal Engine
+#include "TimerManager.h"
+#include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Components/BoxComponent.h"
 
 ACBossTrigger::ACBossTrigger()
 {
+	PrimaryActorTick.bCanEverTick = false;
+
 	BossTrigger = CreateDefaultSubobject<UBoxComponent>(FName("BossTrigger"));
 }
 
@@ -74,10 +78,16 @@ void ACBossTrigger::Interaction()
 			{
 				CLOG_ERROR_RETURN_TEXT(L"Level Name is NONE, Check the Trigger Blueprint");
 			}
-			UGameplayStatics::OpenLevel(this, LevelName);
+
+			GetWorld()->GetTimerManager().SetTimer(LevelOpenDelayTimerHandle, this, &ACBossTrigger::OpenLevel, 3, false);
 			break;
 		}
 	}
+}
+
+void ACBossTrigger::OpenLevel()
+{
+	UGameplayStatics::OpenLevel(this, LevelName);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
