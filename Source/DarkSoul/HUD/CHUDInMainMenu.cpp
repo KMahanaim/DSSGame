@@ -211,5 +211,7 @@ void ACHUDInMainMenu::EnterMenu()
 
 void ACHUDInMainMenu::OpenLevel()
 {
-	UGameplayStatics::OpenLevel(this, FName("Arena"));
+	//UGameplayStatics::OpenLevel(this, FName("Arena"));
+	//UWorld::ServerTravel
+	//PlayerOwner->ClientTravel("/Game/DarkSoul/Maps/Arena.Arena", ETravelType::TRAVEL_Absolute);
 }

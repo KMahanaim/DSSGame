@@ -81,6 +81,12 @@ ACCombatCharacter::ACCombatCharacter()
 		GetCapsuleComponent()->SetCollisionProfileName(FName("CapsuleCollision"));
 		GetMesh()->SetCollisionProfileName(FName("CombatCharacter"));
 	}
+
+	// Set Network, Replication
+	{
+		SetReplicates(true);
+		SetReplicateMovement(true);
+	}
 }
 
 void ACCombatCharacter::BeginPlay()
@@ -292,18 +298,32 @@ void ACCombatCharacter::CastComplete()
 	}
 }
 
-void ACCombatCharacter::RollAction()
+bool ACCombatCharacter::MultiCastMontagePlay_Validate(UAnimMontage* ActionMontage)
 {
-	CLOG_ERROR_FUNC_TEXT(L"Should be override RollAction Function");
+	if (ActionMontage == nullptr)
+	{
+		return false;
+	}
+
+	return true;
 }
 
-float ACCombatCharacter::AttackAction(EAttackType NewAttackType)
+void ACCombatCharacter::MultiCastMontagePlay_Implementation(UAnimMontage* ActionMontage, const float PlaySpeed)
+{
+	PlayAnimMontage(ActionMontage, PlaySpeed);
+}
+
+void ACCombatCharacter::RollAction_Implementation()
+{
+	CLOG_ERROR_FUNC_TEXT(L"Should be override RollAction Function, This Func Implementation");
+}
+
+void ACCombatCharacter::AttackAction_Implementation(EAttackType NewAttackType)
 {
 	CLOG_ERROR_FUNC_TEXT(L"Should be override AttackAction Function");
-	return 0.0f;
 }
 
-void ACCombatCharacter::WeaponSwitchAction(EWeaponSwitchType SwitchType)
+void ACCombatCharacter::WeaponSwitchAction_Implementation(EWeaponSwitchType SwitchType)
 {
 	CLOG_ERROR_FUNC_TEXT(L"Should be override WeaponSwitchAction Function");
 }
@@ -622,6 +642,16 @@ EDirection ACCombatCharacter::GetHitDirection(FVector HitFromDirection, AActor* 
 
 	return EDirection::FRONT;
 };
+
+const float ACCombatCharacter::GetMontagePlayTime(UAnimMontage* Montage, const float PlaySpeed)
+{
+	if (Montage != nullptr)
+	{
+		return Montage->GetPlayLength() * PlaySpeed;
+	}
+
+	return 0.0f;
+}
 
 const UDataTable* ACCombatCharacter::GetMontages(EMontageAction SelectMontage) const
 {

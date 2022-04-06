@@ -184,7 +184,7 @@ void ACPlayerCharacter::OffInteraction()
 	}
 }
 
-void ACPlayerCharacter::RollAction()
+void ACPlayerCharacter::RollAction_Implementation()
 {
 	if (CanRoll())
 	{
@@ -198,14 +198,15 @@ void ACPlayerCharacter::RollAction()
 		{
 			// 마지막 방향 입력값에 맞춰 캐릭터 회전
 			SetActorRelativeRotation(GetDesiredRotation());
-			PlayAnimMontage(RollMontage);
+			MultiCastMontagePlay(RollMontage);
+
 			// Remove Stamina
 			ExtendedStamina->ModifyStat(RollStaminaCost * -1.0f, true);
 		}
 	}
 }
 
-float ACPlayerCharacter::AttackAction(EAttackType NewAttackType)
+void ACPlayerCharacter::AttackAction_Implementation(EAttackType NewAttackType)
 {
 	float MontagePlayTime = 0.0f;
 
@@ -230,8 +231,12 @@ float ACPlayerCharacter::AttackAction(EAttackType NewAttackType)
 			ResetAttackCount();
 		}
 
-		// Reset Attack Counter
-		MontagePlayTime = PlayAnimMontage(AttackMontage, StatsManager->GetStatValue(EStatsType::ATTACK_SPEED, true));
+		const float AttackSpeed = StatsManager->GetStatValue(EStatsType::ATTACK_SPEED, true);
+		MultiCastMontagePlay(AttackMontage, AttackSpeed);
+		MontagePlayTime = GetMontagePlayTime(AttackMontage, AttackSpeed);
+		//OutMontagePlayTime = PlayAnimMontage(AttackMontage, StatsManager->GetStatValue(EStatsType::ATTACK_SPEED, true));
+
+		// Reset Attack Counter Timer
 		GetWorldTimerManager().SetTimer(ResetAttackCounterTimerHandle, this, &ACPlayerCharacter::ResetAttackCount, MontagePlayTime * 0.8f);
 
 		// Remove Stamina
@@ -239,11 +244,9 @@ float ACPlayerCharacter::AttackAction(EAttackType NewAttackType)
 		StaminaCost = ScaleAttackStaminaCostByType(StaminaCost, AttackType);
 		ExtendedStamina->ModifyStat(StaminaCost * -1.0f, true);
 	}
-
-	return MontagePlayTime;
 }
 
-void ACPlayerCharacter::WeaponSwitchAction(EWeaponSwitchType SwitchType)
+void ACPlayerCharacter::WeaponSwitchAction_Implementation(EWeaponSwitchType SwitchType)
 {
 	if (Equipment->IsInCombat())
 	{
@@ -255,7 +258,9 @@ void ACPlayerCharacter::WeaponSwitchAction(EWeaponSwitchType SwitchType)
 		{
 			// Weapon Undraw
 			GetWorldTimerManager().ClearTimer(WeaponSwitchMotionTimerHandle);
-			AnimMontagePlayTime = PlayAnimMontage(Montage);
+			MultiCastMontagePlay(Montage);
+			AnimMontagePlayTime = GetMontagePlayTime(Montage);
+			//AnimMontagePlayTime = PlayAnimMontage(Montage);
 			GetWorldTimerManager().SetTimer(WeaponSwitchMotionTimerHandle, this, &ACPlayerCharacter::ToggleCombat, AnimMontagePlayTime * 0.8);
 			Equipment->SwitchWeapon(SwitchType);
 		}
@@ -267,7 +272,7 @@ void ACPlayerCharacter::WeaponSwitchAction(EWeaponSwitchType SwitchType)
 			Montage = MontageManager->GetMontageforAction(EMontageAction::DRAW_WEAPON);
 			if (Montage != nullptr)
 			{
-				PlayAnimMontage(Montage);
+				MultiCastMontagePlay(Montage, AnimMontagePlayTime);
 			}
 		}
 	}

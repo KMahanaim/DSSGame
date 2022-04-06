@@ -191,7 +191,7 @@ bool ACBaseAI::TakeDamage(const FHitData& HitData, EAttackResult& OutResultType)
 	return Super::TakeDamage(HitData, OutResultType);
 }
 
-float ACBaseAI::AttackAction(EAttackType NewAttackType)
+void ACBaseAI::AttackAction(EAttackType NewAttackType)
 {
 	float MontageDuration = 0.0f;
 
@@ -216,8 +216,6 @@ float ACBaseAI::AttackAction(EAttackType NewAttackType)
 	float StaminaCost = StatsManager->GetStatValue(EStatsType::MELEE_ATTACK_STAMINA_COST, true);
 	StaminaCost = ScaleAttackStaminaCostByType(StaminaCost, AttackType);
 	ExtendedStamina->ModifyStat(StaminaCost * -1.0f, true);
-
-	return MontageDuration;
 }
 
 void ACBaseAI::HideWidget()

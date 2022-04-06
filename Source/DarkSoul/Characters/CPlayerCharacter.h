@@ -89,11 +89,13 @@ public:
 	virtual void OnInteraction(FInteractionMassage InteractionMassage) final;
 	virtual void OffInteraction() final;
 
-	/** Action */
-	virtual void RollAction() final;
-	virtual float AttackAction(EAttackType NewAttackType) final;
-	virtual void WeaponSwitchAction(EWeaponSwitchType SwitchType) final;
+private:
+	/** Action Server Implementation */
+	virtual void RollAction_Implementation() final;
+	virtual void AttackAction_Implementation(EAttackType NewAttackType) final;
+	virtual void WeaponSwitchAction_Implementation(EWeaponSwitchType SwitchType) final;
 
+public:
 	void OnCinematic();
 	void EndCinematic();
 	void OnBeginLoading();

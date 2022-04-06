@@ -125,9 +125,20 @@ public:
 	void ToggleCombat();
 	void ToggleCombat(float& OutMontagePlayTime);
 	void CastComplete();
-	virtual void RollAction();
-	virtual float AttackAction(EAttackType NewAttackType);
-	virtual void WeaponSwitchAction(EWeaponSwitchType SwitchType);
+
+	/** Animation Sync */
+	UFUNCTION(NetMultiCast, Unreliable, WithValidation)
+		virtual void MultiCastMontagePlay(UAnimMontage* ActionMontage, const float PlaySpeed = 1.0f);
+
+	/** Action Sync */
+	UFUNCTION(Server, Reliable)
+		virtual void RollAction();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+		virtual void AttackAction(EAttackType NewAttackType);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+		virtual void WeaponSwitchAction(EWeaponSwitchType SwitchType);
 
 protected:
 	EMontageAction ConvertAttackTypeToAction(EAttackType AttackType);
@@ -158,6 +169,7 @@ public:
 	EDirection GetHitDirection(FVector HitFromDirection, AActor* AttackedActor);
 
 	/** Get Montages */
+	const float GetMontagePlayTime(UAnimMontage* Montage, const float PlaySpeed = 1.0f);
 	virtual const UDataTable* GetMontages(EMontageAction SelectMontage) const override;
 	UAnimMontage* GetRollMontage();
 	UAnimMontage* GetStunMontage(EDirection Direction);

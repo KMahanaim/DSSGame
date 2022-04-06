@@ -48,8 +48,10 @@ void UCExtendedCameraComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 
 void UCExtendedCameraComponent::InterpRotation(float DeltaTime)
 {
-	CLOG_ERROR_CHECK_RETURN(Owner);
-	CLOG_ERROR_CHECK_RETURN(OwnerController);
+	//CLOG_ERROR_CHECK_RETURN(Owner);
+	//CLOG_ERROR_CHECK_RETURN(OwnerController);
+	if (Owner == nullptr) return;
+	if (OwnerController == nullptr) return;
 
 	//CLog::Print(Owner->GetVelocity(), 1.0f, FColor::Blue, 1);
 	//CLog::Print(OwnerController->GetControlRotation(), 1.0f, FColor::Cyan, 2);

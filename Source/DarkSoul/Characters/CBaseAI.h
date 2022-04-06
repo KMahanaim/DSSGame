@@ -48,7 +48,7 @@ public:
 	virtual bool TakeDamage(const FHitData& HitData, EAttackResult& OutResultType) final;
 
 	/** Action */
-	virtual float AttackAction(EAttackType TargetAttackType) final;
+	virtual void AttackAction(EAttackType TargetAttackType) final;
 
 private:
 	void HideWidget();
